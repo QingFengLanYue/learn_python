@@ -1,0 +1,70 @@
+def force(k):
+  global isok
+  if isok:  
+    return
+  if sd[k]==0:
+    for m in range(1,10):
+     mm = 1
+     if m in ex1[k]:
+       mm = 0
+     else: 
+      for n in range(0,9):
+        if ((m == sd[k//27*27+(k%9//3)*3+n+n//3*6]) or (m == sd[9*n+k%9]) or (m == sd[k//9*9+n])):
+          mm = 0
+          break
+     if mm:
+       sd[k] = m
+       if (k == 80):
+         isok = 1
+         print(sd) #show new sd
+         return
+       force(k + 1)
+    sd[k] = 0
+  else:
+    if (k == 80):
+      isok = 1
+      print(sd) #show new sd
+      return
+    force(k + 1)
+
+
+def same_row(i,j): return (i//9 == j//9)
+
+def same_col(i,j): return (i-j) % 9 == 0
+
+def same_block(i,j): return (i//27 == j//27 and i%9//3 == j%9//3)
+
+isok=0
+s="800000000003600000070090200050007000000045700000100030001000068008500010090000400"
+sd=list(range(81))
+for i in range(81):
+  sd[i]=int(s[i])
+
+ex1=dict() #neiber of each cell
+for i in range(81):
+ ex1[i]=set()
+ if sd[i]==0:
+  for j in range(81):
+   if j!=i and (same_row(i,j) or same_col(i,j) or same_block(i,j)) :
+    ex1[i].add(sd[j]) 
+
+print (ex1[1])
+
+#force(0)
+
+
+def longestCommonPrefix(strs: list) -> str:
+    if not strs: return ""
+    str0 = min(strs)
+    str1 = max(strs)
+    for i in range(len(str0)):
+        if str0[i] != str1[i]:
+            s = str0[:i]
+            break
+    print(s)
+
+
+longestCommonPrefix(["flower","falow","flight"])
+
+
+

@@ -1,0 +1,53 @@
+# -*- coding: utf-8 -*-
+from pandas import Series
+import pandas as pd
+import time
+import xlrd
+date = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+sheet_name = 'DWD_MARKET_DIM'
+theme = "ORDER"
+desc = '市场细分参数表'
+
+print("--*******************************************************************************")
+print("--**所属主题：" + theme)
+print("--**功能描述：" + desc)
+print("--**创建者：momo")
+print("--**创建日期：" + date)
+print("--**修改日志：")
+print("--**修改日期：")
+print("--**修改人：")
+print("--******************************************************************************")
+
+create_row = Series(["CREATE  TABLE IF NOT EXISTS `dwd." + sheet_name.lower() + "`("])
+other_row = Series(
+    [')', "COMMENT '" + desc + "'", 'PARTITIONED BY (', '  `dt` string,', '  `hotel` string)', 'ROW FORMAT DELIMITED',
+     "  FIELDS TERMINATED BY '\\t' ", "  LINES TERMINATED BY '\\n'", "NULL DEFINED AS ''", 'STORED AS orc;'])
+df = pd.read_excel("D:\工作\数据仓库\测试.xlsx", sheet_name=sheet_name)
+row=(",`"+df['字段名称'].str.lower()+"` "+df['数据类型'].str.lower()+" COMMENT '"+df['字段备注'].map(str)+"'")
+row[0]=row[0].lstrip(',')
+half_row = create_row.append(row)
+all_row = half_row.append(other_row)
+#print(all_row[20])
+
+for column in all_row:
+    print(column)
+
+print("--加载数据")
+create_sql = Series(["INSERT overwrite TABLE dwd." + sheet_name.lower() + " partition(dt='${hivevar:dt}',hotel)"])
+# print(create_sql.values)
+select_sql = Series(["SELECT "])
+#print(select_sql)
+from_sql = Series(
+    ["FROM  dwd." + sheet_name.lower(), "WHERE  dt='${hivevar:dt}'", "  AND  hotel in('${hivevar:hotel}') "])
+sql = ("," + df['源字段'].str.lower() + "                    AS " + df['字段名称'].str.lower())
+sql[0] = sql[0].lstrip(',')
+ha_lf_sql = create_sql.append(select_sql)
+half_sql = ha_lf_sql.append(sql)
+all_sql = half_sql.append(from_sql)
+
+for column in all_sql:
+    #print(column.replace("+",","))
+    if "+" in column:
+      print(",concat_ws('_'",column.replace("+",",").replace("AS",") AS"))
+    else:
+      print (column)
