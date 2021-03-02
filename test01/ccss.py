@@ -4,4 +4,5 @@ def fn(n):
     else:
         return n*fn(n-1)
 m=fn(5)
+
 print(m)

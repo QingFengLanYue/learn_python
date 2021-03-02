@@ -34,6 +34,6 @@ if __name__ == '__main__':
     print("----------------脚本传参----------------")
     print(opt1)
     print('filename is %s'%opt1.filename)
-    print('vision is %s' % opt1.verbose)
+    print('vision is %s'  %opt1.verbose)
     print(ar1)
     print(sys.argv)
