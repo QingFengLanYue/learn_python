@@ -10,6 +10,7 @@ from test01.mm import main as mm
 # PRIMARY KEY (`id`)
 # )
 
+#装饰器，捕捉sql异常
 def decorate(func):
     def except_deal(sql):
         try:
@@ -23,14 +24,25 @@ def decorate(func):
 
     return except_deal
 
+#mysql 连接
+def con_my():
+    host='localhost'
+    port=3306
+    user='root'
+    password='root'
+    db='test'
+    conn = pymysql.connect(host=host, port=port, user=user, password=password, db=db, charset='utf8')
+    cur = conn.cursor()
+    return conn,cur
+
 def select_sql(name):
     sql="select user_name,keyword,passwd from test.user where user_name='%s';"%(name)
     return sql
 
+
 @decorate
-def conn_mysql(sql):
-    conn = pymysql.connect(host='localhost', port=3306, user='root', password='root', db='test', charset='utf8')
-    cur = conn.cursor()
+def check_exists(sql):
+    conn,cur = con_my()
     cur.execute(sql)
     result = cur.fetchall()
     cur.close()
@@ -40,14 +52,14 @@ def conn_mysql(sql):
 
 def check_name(name):
     s_sql=select_sql(name)
-    a=conn_mysql(s_sql)
-    if len(a)==0:
+    check_res=check_exists(s_sql)
+    if len(check_res)==0:
         user_passwd=''
         user_key=''
         result_name = 0
         print("{0}用户名不存在".format(name))
     else:
-        st = a[0]
+        st = check_res[0]
 
         user_key = st[1]
         user_passwd = st[2]
@@ -58,13 +70,10 @@ def check_name(name):
 
 # #检测密码是否正确
 def login_check(name,passwd,user_name,user_passwd):
-
-    check_log = 0
     if name == user_name and passwd == user_passwd:
-        print("{0}用户登录成功~".format(name))
         check_log = 1
-    if check_log == 0:
-        print("{0}密码输入错误,登陆失败~".format(name))
+    else :
+        check_log = 0
     return check_log
 
 #login_check("zhangsan","123","zhangsan","1234")
@@ -80,13 +89,13 @@ def write_name(sql):
     #key, res = jiami(passwd)
     # key='edrcq'
     # res='lhcnbsz'
-    conn = pymysql.connect(host='localhost', port=3306, user='root', password='root', db='test', charset='utf8')
-    cur = conn.cursor()
+    conn, cur = con_my()
     cur.execute(sql)
     cur.execute('COMMIT;')
     cur.close()
     conn.close()
 #write_name("lisi","1234")
+
 def jiami(key_words):
     num=random.randint(3,8)
     key=''.join(random.sample('abcdefghijklmnopqrstuvwxyz',num))
@@ -105,6 +114,23 @@ def jiemi(key,res):
     res=mm(key,res,type)
     return res
 
+
+def check_num(name, passwd, user_name, user_passwd1):
+    num = 0
+    while num < 3:
+        check_log = login_check(name, passwd, user_name, user_passwd1)
+        # passwd=22
+        if check_log == 1:
+            print("{0}用户登录成功~".format(name))
+            num = 3
+        else:
+            num += 1
+            print("{0}密码输入错误,登陆失败~".format(name))
+            print("密码已经输错{0}次,总共3次机会!".format(num))
+            if num != 3:
+                passwd = str(input("请重新输入密码:"))
+
+
 #主函数
 def name_input(name,passwd):
     passwd=str(passwd)
@@ -113,18 +139,7 @@ def name_input(name,passwd):
 
     if result_name == 1 :
         user_passwd1 = jiemi(user_key, user_passwd)  # 解密后的密码
-        check_log = login_check(name, passwd, user_name, user_passwd1)
-        if check_log == 0 :
-            num=1
-            while num < 3 :
-                passwd=str(input("请重新输入密码:"))
-                #passwd=22
-                check_log = login_check(name, passwd, user_name, user_passwd1)
-                if check_log == 1 :
-                    num = 3
-                else :
-                    num += 1
-                    print("密码已经输错{0}次,总共3次机会".format(num))
+        check_num(name, passwd, user_name, user_passwd1)
     else :
         write_log=input("是否进行账户的注册(Y/N):")
         if write_log.upper() == "Y" :
