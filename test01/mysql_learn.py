@@ -1,11 +1,37 @@
 import random
 import pymysql
-from test01.mm import  __main__
+from test01.mm import main as mm
 
-def conn_mysql(name):
+# CREATE TABLE test.user(
+# id bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+# user_name varchar(20)  NOT NULL COMMENT '用户名',
+# keyword varchar(10)  NOT NULL COMMENT '关键字',
+# passwd varchar(50)  NOT NULL COMMENT '密码',
+# PRIMARY KEY (`id`)
+# )
+
+def decorate(func):
+    def except_deal(sql):
+        try:
+            return func(sql)
+        except pymysql.err.ProgrammingError as e:
+            print('Sql 语句报错', e)
+            # 捕获由于sql语句错误抛出的异常
+            # 捕获后的操作
+        except pymysql.err.IntegrityError as e:
+            print('主键冲突,请核对后重新输入\n', e)
+
+    return except_deal
+
+def select_sql(name):
+    sql="select user_name,keyword,passwd from test.user where user_name='%s';"%(name)
+    return sql
+
+@decorate
+def conn_mysql(sql):
     conn = pymysql.connect(host='localhost', port=3306, user='root', password='root', db='test', charset='utf8')
     cur = conn.cursor()
-    cur.execute('select * from test.test1 where name_id=%s'%(name))
+    cur.execute(sql)
     result = cur.fetchall()
     cur.close()
     conn.close()
@@ -13,14 +39,15 @@ def conn_mysql(name):
 
 
 def check_name(name):
-    a=conn_mysql(name)
+    s_sql=select_sql(name)
+    a=conn_mysql(s_sql)
     if len(a)==0:
         user_passwd=''
         user_key=''
         result_name = 0
         print("{0}用户名不存在".format(name))
     else:
-        st = conn_mysql(name)[0]
+        st = a[0]
 
         user_key = st[1]
         user_passwd = st[2]
@@ -42,14 +69,20 @@ def login_check(name,passwd,user_name,user_passwd):
 
 #login_check("zhangsan","123","zhangsan","1234")
 
-#注册用户
-def write_name(name,passwd):
+def insert_sql(name,passwd):
     key, res = jiami(passwd)
+    sql='insert into test.user(user_name,keyword,passwd) values("%s","%s","%s");' % (name,key,res)
+    return sql
+
+#注册用户
+@decorate
+def write_name(sql):
+    #key, res = jiami(passwd)
     # key='edrcq'
     # res='lhcnbsz'
     conn = pymysql.connect(host='localhost', port=3306, user='root', password='root', db='test', charset='utf8')
     cur = conn.cursor()
-    cur.execute('insert into test1 values(%s,"%s","%s");' % (name,key,res))
+    cur.execute(sql)
     cur.execute('COMMIT;')
     cur.close()
     conn.close()
@@ -59,7 +92,7 @@ def jiami(key_words):
     key=''.join(random.sample('abcdefghijklmnopqrstuvwxyz',num))
     type='A'
 
-    res=__main__(key,key_words,type)
+    res=mm(key,key_words,type)
     return key,res
 
 # write_name(66,'helllow')
@@ -69,7 +102,7 @@ def jiami(key_words):
 def jiemi(key,res):
     type='j'
 
-    res=__main__(key,res,type)
+    res=mm(key,res,type)
     return res
 
 #主函数
@@ -97,13 +130,15 @@ def name_input(name,passwd):
         if write_log.upper() == "Y" :
             print("注册的用户名为:{0}".format(name))
             passwd = input("请输入密码:")
-            write_name(name, passwd)
+            i_sql = insert_sql(name,passwd)
+            write_name(i_sql)
+
             print("恭喜{0}用户注册成功!".format(name))
 
 if __name__ == '__main__':
 
-    name = input('请输入用户名: ')
-    passwd = input('请输入密码: ')
+    name = input(r'请输入用户名: ')
+    passwd = input(r'请输入密码: ')
     name_input(name,passwd)
 
 
