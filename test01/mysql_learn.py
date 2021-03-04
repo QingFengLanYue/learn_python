@@ -1,6 +1,7 @@
 import random
 import pymysql
 from test01.mm import main as mm
+from test01.passwd_check import passwd_check
 
 # CREATE TABLE test.user(
 # id bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
@@ -98,7 +99,8 @@ def write_name(sql):
 
 def jiami(key_words):
     num=random.randint(3,8)
-    key=''.join(random.sample('abcdefghijklmnopqrstuvwxyz',num))
+    key_pol=[chr(a) for a in range(33,127)]
+    key=''.join(random.sample(key_pol,num))
     type='A'
 
     res=mm(key,key_words,type)
@@ -114,7 +116,7 @@ def jiemi(key,res):
     res=mm(key,res,type)
     return res
 
-
+#检查输入是否正确，最多输错三次
 def check_num(name, passwd, user_name, user_passwd1):
     num = 0
     while num < 3:
@@ -128,7 +130,20 @@ def check_num(name, passwd, user_name, user_passwd1):
             print("{0}密码输入错误,登陆失败~".format(name))
             print("密码已经输错{0}次,总共3次机会!".format(num))
             if num != 3:
-                passwd = str(input("请重新输入密码:"))
+                passwd = str(input(r"请重新输入密码: "))
+
+
+def passwd_check_num(passwd):
+    n = 0
+    while n < 5:
+        passwd_check_res=passwd_check(passwd)
+        if passwd_check_res == 1:
+            #print("{0}用户登录成功~".format(name))
+            n = 5
+        else:
+            n += 1
+            if n != 5:
+                passwd = str(input(r"请重新输入密码: "))
 
 
 #主函数
@@ -141,10 +156,11 @@ def name_input(name,passwd):
         user_passwd1 = jiemi(user_key, user_passwd)  # 解密后的密码
         check_num(name, passwd, user_name, user_passwd1)
     else :
-        write_log=input("是否进行账户的注册(Y/N):")
+        write_log=input("是否进行账户的注册(Y/N): ")
         if write_log.upper() == "Y" :
             print("注册的用户名为:{0}".format(name))
-            passwd = input("请输入密码:")
+            passwd = input(r"请输入密码: ")
+            passwd_check_num(passwd)
             i_sql = insert_sql(name,passwd)
             write_name(i_sql)
 
