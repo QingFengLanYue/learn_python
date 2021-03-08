@@ -1,3 +1,4 @@
+import datetime
 import random
 import pymysql
 from test01.mm import main as mm
@@ -9,6 +10,15 @@ from test01.passwd_check import passwd_check
 # keyword varchar(10)  NOT NULL COMMENT '关键字',
 # passwd varchar(50)  NOT NULL COMMENT '密码',
 # PRIMARY KEY (`id`)
+# )
+
+# CREATE TABLE test.user_log (
+#   `id` bigint(10) unsigned NOT NULL AUTO_INCREMENT,
+#   `user_name` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+#   `login_num` tinyint(4) NOT NULL DEFAULT '1' COMMENT '登录次数',
+#   `login_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+#   `login_result` tinyint(4) NOT NULL DEFAULT '0' COMMENT '0:faile ,1 sucess',
+#   PRIMARY KEY (`id`)
 # )
 
 #装饰器，捕捉sql异常
@@ -119,32 +129,47 @@ def jiemi(key,res):
 #检查输入是否正确，最多输错三次
 def check_num(name, passwd, user_name, user_passwd1):
     num = 0
+    reslut = 0
     while num < 3:
         check_log = login_check(name, passwd, user_name, user_passwd1)
         # passwd=22
         if check_log == 1:
             print("{0}用户登录成功~".format(name))
-            num = 3
+            num += 1
+            reslut = 1
+            break
         else:
             num += 1
             print("{0}密码输入错误,登陆失败~".format(name))
             print("密码已经输错{0}次,总共3次机会!".format(num))
             if num != 3:
                 passwd = str(input(r"请重新输入密码: "))
+    return num ,reslut
 
 
 def passwd_check_num(passwd):
     n = 0
+    result = 0
     while n < 5:
         passwd_check_res=passwd_check(passwd)
         if passwd_check_res == 1:
             #print("{0}用户登录成功~".format(name))
             n = 5
+            result = 1
+            passwd = passwd
         else:
             n += 1
             if n != 5:
                 passwd = str(input(r"请重新输入密码: "))
+    return result,passwd
 
+def get_now_time():
+    now_time=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return now_time
+
+def insert_log(name,now_time,login_num,login_result):
+    sql = 'insert into test.user_log(user_name,login_time,login_num,login_result) values("%s","%s","%s","%s");' % (name,now_time,login_num,login_result)
+    return sql
 
 #主函数
 def name_input(name,passwd):
@@ -154,17 +179,25 @@ def name_input(name,passwd):
 
     if result_name == 1 :
         user_passwd1 = jiemi(user_key, user_passwd)  # 解密后的密码
-        check_num(name, passwd, user_name, user_passwd1)
+        login_num,login_result = check_num(name, passwd, user_name, user_passwd1)
+        now_time = get_now_time()
+        log_sql = insert_log(name,now_time,login_num,login_result)
+        write_name(log_sql)
     else :
         write_log=input("是否进行账户的注册(Y/N): ")
         if write_log.upper() == "Y" :
             print("注册的用户名为:{0}".format(name))
             passwd = input(r"请输入密码: ")
-            passwd_check_num(passwd)
-            i_sql = insert_sql(name,passwd)
-            write_name(i_sql)
+            pass_check_res,passwd = passwd_check_num(passwd)
+            #print(pass_check_res,passwd,type(pass_check_res),type(passwd))
+            if pass_check_res == 1:
+                i_sql = insert_sql(name,passwd)
+                #print(i_sql)
+                write_name(i_sql)
 
-            print("恭喜{0}用户注册成功!".format(name))
+                print("恭喜{0}用户注册成功!".format(name))
+            else :
+                print("{0}用户注册失败!".format(name))
 
 if __name__ == '__main__':
 
