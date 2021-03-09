@@ -130,16 +130,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-inspectionProfiles
-
-.idea
-
-# d:/work2/lear_python/.gitignore
-
-
-
+.gitignore
 .idea/.gitignore
+.idea/inspectionProfiles/
 .idea/learn_python.iml
 .idea/misc.xml
 .idea/modules.xml
 .idea/vcs.xml
+test01/__pycache__/
