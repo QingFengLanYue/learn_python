@@ -5,6 +5,10 @@ class cs:
         print("hello words %s" %self.name)
     def cs2(self):
         pass
+    def cs3(self):
+        print(1)
+    def cs4(name):
+        print(name)
 
 if __name__ == '__main__':
     b=cs('rob')
@@ -12,5 +16,10 @@ if __name__ == '__main__':
     b.name='www'
     b.cs1()
     b.cs2()
+    b.cs3()
+    b.cs4()
+
+import test01.文件差异比较
+
 
 

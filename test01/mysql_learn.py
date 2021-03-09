@@ -168,7 +168,10 @@ def get_now_time():
     return now_time
 
 def insert_log(name,now_time,login_num,login_result):
-    sql = 'insert into test.user_log(user_name,login_time,login_num,login_result) values("%s","%s","%s","%s");' % (name,now_time,login_num,login_result)
+    sql = 'insert into test.user_log(user_name,login_time,login_num,login_result)  values("%s","%s","%s","%s");' \
+          % (name,now_time,login_num,login_result)
+
+
     return sql
 
 #主函数
