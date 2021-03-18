@@ -1,4 +1,5 @@
 #mysql 连接
+import datetime
 import json
 import pymysql
 import pandas as pd
@@ -63,7 +64,8 @@ def dict_reve():
 
 
 def dict_rate():
-    dict1= {'date':"fromDate",
+    dict1= {'begin_date':"fromDate",
+            'end_date':"toDate",
             'rate_code':"rateCode",
             'market_code':"marketCode"
         }
@@ -71,11 +73,12 @@ def dict_rate():
 
 def rate_deal(stay_record_id,dict1,rate_list):
     dict3 = dict_deal(dict1, rate_list)
-    date = dict3['date']
+    begin_date = dict3['begin_date']
+    end_date = dict3['end_date']
     rate_code = dict3['rate_code']
     market_code = dict3['market_code']
 
-    l1 = [stay_record_id, date, rate_code, market_code]
+    l1 = [stay_record_id, begin_date, end_date, rate_code, market_code]
     return l1
 
 def reve_deal(stay_record_id,pms_conf_no,dict1,reve_list):
@@ -92,6 +95,30 @@ def reve_deal(stay_record_id,pms_conf_no,dict1,reve_list):
     l1 = [stay_record_id, pms_conf_no, date, pms_amt, cen_amt, pms_cur, \
           cen_cur, rev_type, exc, de, seq]
     return l1
+
+def date_deal(l):
+
+    stay_record_id = l[0]
+    begin_date = datetime.datetime.strptime(l[1], "%Y-%m-%d").date()
+    end_date = datetime.datetime.strptime(l[2], "%Y-%m-%d").date()
+    rate_code = l[3]
+    market_code = l[4]
+    res = []
+    if begin_date == end_date:
+        date = str(begin_date)
+        l=[stay_record_id,date,rate_code,market_code]
+        res.append(l)
+    else :
+        date1 = []
+        while begin_date <= end_date:
+            date1.append(str(begin_date))
+            begin_date = begin_date + datetime.timedelta(days=1)
+
+        for date in date1:
+            l=[stay_record_id, date, rate_code, market_code]
+            res.append(l)
+    return res
+
 
 
 def main(sql):
@@ -119,7 +146,9 @@ def main(sql):
 
         for m in range(len(rate_list)):
             l2 = rate_deal(stay_record_id,dict2,rate_list[m])
-            l_rate.append(l2)
+            res = date_deal(l2)
+
+            l_rate.extend(res)
 
 
     df1 = pd.DataFrame(l_res, columns=['stay_record_id', 'pms_no', 'date', 'pms_amt', 'cen_amt', \
@@ -133,10 +162,10 @@ def main(sql):
 
 if __name__ == '__main__':
 
-    sql = 'select * from stay_record_test limit 376'
+    sql = 'select * from stay_record_test where stay_record_id =2 '
     file = 'D:/work2/tmp/stay_rev.xlsx'
     writer = pd.ExcelWriter(file)
-    df1,df2 = main(sql)
-    df1.to_excel(writer, sheet_name='revenue',index=False)
-    df2.to_excel(writer, sheet_name='rate',index=False)
+    df1, df2 = main(sql)
+    df1.to_excel(writer, sheet_name='revenue', index=False)
+    df2.to_excel(writer, sheet_name='rate', index=False)
     writer.save()
