@@ -162,7 +162,7 @@ def main(sql):
 
 if __name__ == '__main__':
 
-    sql = 'select * from stay_record_test where stay_record_id =2 '
+    sql = 'select * from stay_record_test '
     file = 'D:/work2/tmp/stay_rev.xlsx'
     writer = pd.ExcelWriter(file)
     df1, df2 = main(sql)

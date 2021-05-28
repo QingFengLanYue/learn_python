@@ -3,10 +3,11 @@ author:cai
 project:learn_python
 date:2021/5/8
 '''
+from re import split
 
 from test01.sql_mysql import *
 import pandas as pd
-
+import json
 scheam = 'test'
 table_name = 'stay_record_test'
 
@@ -27,6 +28,16 @@ re = mysql_select(sql2)
 
 df_re = pd.DataFrame(re,columns=columns)
 
-df1=df_re.loc[df_re['conf_no'].isin(['10712067225','10368521142'])]
+df1=df_re.loc[df_re['conf_no'].isin(['10712067225'])]
 
-print(df1[['id','conf_no','detail']])
+l =df1['detail'].values
+l=l[0]
+# print(split(str(df1['detail']),',')[1])
+#print(df1[['id','conf_no','detail']])
+#
+j=(json.loads(l))
+print(j,type(j))
+print(j['altIds'])
+for i in j['revenueList']:
+    print(i)
+
