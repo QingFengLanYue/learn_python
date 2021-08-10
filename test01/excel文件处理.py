@@ -1,12 +1,12 @@
-from test01.文件差异比较 import dealExceldiff
-import pandas as pd
-file1 = "D:/work2/test1.xlsx"
-file2 = "D:/work2/test2.xlsx"
-file_write = "D:/work2/test_diff.xlsx"
-primary_key='hh'
+from test01.文件差异比较 import DealExcelDiff
 
 if __name__ == '__main__':
-    dealExceldiff.deal_result(primary_key,file1, file2, file_write)
+    file1 = "D:/work2/test1.xlsx"
+    file2 = "D:/work2/test2.xlsx"
+    file_write = "D:/work2/test_diff.xlsx"
+    primary_key = 'id'
+    a = DealExcelDiff(primary_key, file1, file2, file_write)
+    a.deal_result()
 
 # file3 = "D:/work2/test.xlsx"
 # df=pd.read_excel(file3,sheet_name='a',index_col=0)
