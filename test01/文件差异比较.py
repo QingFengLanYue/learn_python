@@ -25,6 +25,39 @@ class DealAddLine(DealDelLine):
         return df1
 
 
+class DealColumn:
+    """
+    列的更新
+    """
+
+    def __init__(self, filename, df1, df2):
+        self.filename = filename
+        self.df1 = df1
+        self.df2 = df2
+
+    def deal_column(self):
+        """
+        返回新增的列和删除的列
+        :return:
+        """
+        column_df1 = self.df1.columns.values
+        column_df2 = self.df2.columns.values
+
+        # 删除的行
+        same_column = [i for i in column_df1 if i in column_df2]
+        only_df1_column = [i for i in column_df1 if i not in column_df2]
+        only_df2_column = [i for i in column_df2 if i not in column_df1]
+
+        df1 = self.df1[same_column]
+        df2 = self.df2[same_column]
+        if only_df1_column:
+            print('%s删除了 %s列' % (self.filename, only_df1_column))
+        if only_df2_column:
+            print('%s新增了 %s列' % (self.filename, only_df2_column))
+
+        return df1, df2, only_df1_column, only_df2_column
+
+
 class DealExcelDiff(DealAddLine):
 
     def __init__(self, primary_key, file1, file2, file_write):
@@ -33,9 +66,9 @@ class DealExcelDiff(DealAddLine):
         self.file1 = file1
         self.file2 = file2
         self.file_write = file_write
-        self.filename = self.file_analy()
+        self.filename = self.file_ana()
 
-    def file_analy(self):
+    def file_ana(self):
         file_path, filename = os.path.split(self.file1)
         return filename
 
@@ -66,42 +99,20 @@ class DealExcelDiff(DealAddLine):
         df_del = df1.loc[~df1[self.primary_key].isin(df2[self.primary_key])]
         return df_same1, df_same2, df_add, df_del
 
-    def deal_column(self, df1, df2):
-        """
-        处理列的变化
-        :param df1:
-        :param df2:
-        :return:
-        """
-        column_df1 = df1.columns.values
-        column_df2 = df2.columns.values
-
-        # 删除的行
-        same_column = [i for i in column_df1 if i in column_df2]
-        only_df1_column = [i for i in column_df1 if i not in column_df2]
-        only_df2_column = [i for i in column_df2 if i not in column_df1]
-
-        df1 = df1[same_column]
-        df2 = df2[same_column]
-        if only_df1_column:
-            print('%s删除了 %s列' % (self.filename, only_df1_column))
-        if only_df2_column:
-            print('%s新增了 %s列' % (self.filename, only_df2_column))
-
-        return df1, df2, only_df1_column, only_df2_column
-
     def deal_result(self):
         df1 = pd.read_excel(self.file1)
         df2 = pd.read_excel(self.file2)
 
-        df1, df2, only_df1_column, only_df2_column = self.deal_column(df1, df2)
+        dc = DealColumn(self.filename, df1, df2)
+
+        df1, df2, only_df1_column, only_df2_column = dc.deal_column()
 
         df_same1, df_same2, df_add, df_del = self.add_del(df1, df2)
 
         deal_df1 = self.deal_same(df_same1, df_same2)
 
-        d1=DealAddLine(df_add)
-        d2=DealDelLine(df_del)
+        d1 = DealAddLine(df_add)
+        d2 = DealDelLine(df_del)
 
         deal_df2 = d1.deal_add()
         deal_df3 = d2.deal_del()
@@ -124,4 +135,4 @@ class DealExcelDiff(DealAddLine):
 #     file1="D:/work2/test1.xlsx"
 #     file2="D:/work2/test2.xlsx"
 #     file_write="D:/work2/test_diff.xlsx"
-#     dealExceldiff.deal_result(file1,file2,file_write)
+#     dealExcelled.deal_result(file1,file2,file_write)
