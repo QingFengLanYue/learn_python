@@ -1,9 +1,10 @@
 # encoding=utf-8
-import pandas as pd
 import os
 
+import pandas as pd
 
-class DealDelLine:
+
+class DealLine:
     def __init__(self, df):
         self.df = df
 
@@ -13,16 +14,22 @@ class DealDelLine:
         df['flag'] = -1
         return df
 
-
-class DealAddLine(DealDelLine):
-    def __init__(self, df):
-        super().__init__(df)
-
     def deal_add(self):
         df1 = pd.DataFrame(self.df)
         print('新增了行：', df1)
         df1['flag'] = 1
         return df1
+
+
+# class DealAddLine(DealDelLine):
+#     def __init__(self, df):
+#         super().__init__(df)
+#
+#     def deal_add(self):
+#         df1 = pd.DataFrame(self.df)
+#         print('新增了行：', df1)
+#         df1['flag'] = 1
+#         return df1
 
 
 class DealColumn:
@@ -58,10 +65,10 @@ class DealColumn:
         return df1, df2, only_df1_column, only_df2_column
 
 
-class DealExcelDiff(DealAddLine):
+class DealExcelDiff(DealLine):
 
     def __init__(self, primary_key, file1, file2, file_write):
-        super().__init__(DealAddLine)
+        super().__init__(DealLine)
         self.primary_key = primary_key
         self.file1 = file1
         self.file2 = file2
@@ -78,9 +85,12 @@ class DealExcelDiff(DealAddLine):
         co = df1.shape[1]
         m = []
         for i in lo:
+            print(i)
+            print(c)
             f1 = df1.loc[df1[self.primary_key] == i].values.flatten()
             f2 = df2.loc[df2[self.primary_key] == i].values.flatten()
             for j in range(co):
+                print(j)
                 if f1[j] != f2[j]:
                     print('修改了%s=%s行对应的%s列,%s->%s' % (self.primary_key, i, c[j], f1[j], f2[j]))
                     f1[j] = str(f1[j]) + '->' + str(f2[j])
@@ -103,6 +113,9 @@ class DealExcelDiff(DealAddLine):
         df1 = pd.read_excel(self.file1)
         df2 = pd.read_excel(self.file2)
 
+        df1 = df1.fillna('001')
+        df2 = df2.fillna('001')
+
         dc = DealColumn(self.filename, df1, df2)
 
         df1, df2, only_df1_column, only_df2_column = dc.deal_column()
@@ -111,8 +124,8 @@ class DealExcelDiff(DealAddLine):
 
         deal_df1 = self.deal_same(df_same1, df_same2)
 
-        d1 = DealAddLine(df_add)
-        d2 = DealDelLine(df_del)
+        d1 = DealLine(df_add)
+        d2 = DealLine(df_del)
 
         deal_df2 = d1.deal_add()
         deal_df3 = d2.deal_del()
@@ -131,8 +144,16 @@ class DealExcelDiff(DealAddLine):
         print(res)
         res.to_excel(self.file_write, sheet_name='diff', index=False)
 
-# if __name__ == '__main__':
-#     file1="D:/work2/test1.xlsx"
-#     file2="D:/work2/test2.xlsx"
-#     file_write="D:/work2/test_diff.xlsx"
-#     dealExcelled.deal_result(file1,file2,file_write)
+
+if __name__ == '__main__':
+    file1 = "D:/工作/room cube/新版room cube/Room Cube优先级较高的字段V1.2.xlsx"
+    file2 = "D:/工作/room cube/新版room cube/Room Cube优先级较高的字段V1.3.xlsx"
+    file_write = "D:/work2/test_diff.xlsx"
+    primary_key = '需求字段'
+    df1 = pd.read_excel(file1).fillna('001')
+    df2 = pd.read_excel(file2).fillna('001')
+
+    a = DealExcelDiff(primary_key, file1, file2, file_write)
+    print(a.primary_key)
+
+    a.deal_same(df1,df2)

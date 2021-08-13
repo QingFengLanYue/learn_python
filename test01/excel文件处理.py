@@ -1,10 +1,10 @@
 from test01.文件差异比较 import DealExcelDiff
 
 if __name__ == '__main__':
-    file1 = "D:/work2/test1.xlsx"
-    file2 = "D:/work2/test2.xlsx"
+    file1 = "D:/工作/room cube/新版room cube/Room Cube优先级较高的字段V1.2.xlsx"
+    file2 = "D:/工作/room cube/新版room cube/Room Cube优先级较高的字段V1.3.xlsx"
     file_write = "D:/work2/test_diff.xlsx"
-    primary_key = 'id'
+    primary_key = '需求字段'
     a = DealExcelDiff(primary_key, file1, file2, file_write)
     a.deal_result()
 
