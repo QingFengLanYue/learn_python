@@ -1,3 +1,5 @@
+import linecache
+import re
 import sys
 import random
 import pandas as pd
@@ -81,7 +83,7 @@ def win_num_random():
     return red
 
 
-def anay_cc(g_num,win_num,file):
+def anay_cc(g_num,win_num):
     li = []
     for i in range(g_num):
         red=sorted(red_qiu())
@@ -119,23 +121,54 @@ def cs():
     g_num=10000
     file='D:/work2/cc.csv'
 
-    hbl=anay_cc(g_num,win_num,file)
+    hbl=anay_cc(g_num,win_num)
     return hbl
 
+def delete_line(lines):
+    w = open(file, 'w', encoding='utf-8')
+
+    w.writelines([item for item in lines[:-1]])
+
+    w.close()
+
+
+def iter_delete_line(file):
+    with open(file, encoding='utf-8') as readFile:
+        if file_size(file):
+            lines = readFile.readlines()
+
+            linecount = len(lines)
+            linecache.clearcache()
+            a = linecache.getline(file, linecount)
+            readFile.close()
+            compile = r'^\[.*\]$'
+
+            if not re.search(compile, a):
+                delete_line(lines)
+                iter_delete_line(file)
+
+def file_size(file):
+    return os.path.exists(file) and os.path.getsize(file)
+
 def con_deal(file):
-    if os.path.exists(file):
+    iter_delete_line(file)
+    if file_size(file):
+
         with open(file, mode='r+', encoding='utf-8') as f1:
             lines = f1.readlines()
             last_line = lines[-1]  # 取最后一行
-            l=last_line.strip('[|]|').strip(' ')
+            # l=last_line.strip('[|]|').strip(' ').strip(']')
+            l = last_line.replace(']','').replace('[','').replace('\n','').strip(' ')
             l1=[]
             for i in l.split(', '):
-                l1.append(float(i))
-            l2=len(l1)
+                l1.append(i)
+            l2=len(l1)+1
     else:
         l1 = []
-        l2 = 0
+        l2 = 1
     return l1,l2
+
+
 
 if __name__=='__main__':
 
