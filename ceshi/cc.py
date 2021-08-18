@@ -154,9 +154,9 @@ def iter_delete_line(file):
             linecache.clearcache()
             a = linecache.getline(file, linecount)
             readFile.close()
-            compile = r'^回报率为'
+            com = re.compile(r'^回报率为')
 
-            if not re.search(compile, a):
+            if not com.search(a):
                 delete_line(lines)
                 iter_delete_line(file)
 
@@ -171,7 +171,7 @@ def con_deal(file):
 
         with open(file, mode='r+', encoding='utf-8') as f1:
             lines = f1.readlines()
-            last_line = lines[-1]  # 取最后一行
+            # last_line = lines[-1]  # 取最后一行
             # l=last_line.strip('[|]|').strip(' ').strip(']')
             # l = last_line.replace(']', '').replace('[', '').replace('\n', '').strip(' ')
             # l1 = []
@@ -179,7 +179,8 @@ def con_deal(file):
             #     l1.append(float(i))
             # l2 = len(l1) + 1
             l1 = []
-            l2 = re.match(r'.*开始(\d+)次测试.*', str(lines))
+            com = re.compile(r'.*开始(\d+)次测试.*')
+            l2 = com.match(str(lines))
             l2 = l2.group(1)
             l2 = int(l2) + 1
     else:
