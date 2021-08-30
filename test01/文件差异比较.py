@@ -85,15 +85,13 @@ class DealExcelDiff(DealLine):
         co = df1.shape[1]
         m = []
         for i in lo:
-            print(i)
-            print(c)
+
             f1 = df1.loc[df1[self.primary_key] == i].values.flatten()
             f2 = df2.loc[df2[self.primary_key] == i].values.flatten()
             for j in range(co):
-                print(j)
                 if f1[j] != f2[j]:
-                    print('修改了%s=%s行对应的%s列,%s->%s' % (self.primary_key, i, c[j], f1[j], f2[j]))
-                    f1[j] = str(f1[j]) + '->' + str(f2[j])
+                    print('修改了%s=%s行对应的%s列,%s--->>%s' % (self.primary_key, i, c[j], f1[j], f2[j]))
+                    f1[j] = str(f1[j]) + '--->>' + str(f2[j])
                 else:
                     f1[j] = f1[j]
             m.append(f1)
@@ -113,8 +111,8 @@ class DealExcelDiff(DealLine):
         df1 = pd.read_excel(self.file1)
         df2 = pd.read_excel(self.file2)
 
-        df1 = df1.fillna('001')
-        df2 = df2.fillna('001')
+        df1 = df1.fillna('')
+        df2 = df2.fillna('')
 
         dc = DealColumn(self.filename, df1, df2)
 
@@ -124,11 +122,17 @@ class DealExcelDiff(DealLine):
 
         deal_df1 = self.deal_same(df_same1, df_same2)
 
-        d1 = DealLine(df_add)
-        d2 = DealLine(df_del)
+        if not df_add.empty:
+            d1 = DealLine(df_add)
+            deal_df2 = d1.deal_add()
+        else:
+            deal_df2 = None
 
-        deal_df2 = d1.deal_add()
-        deal_df3 = d2.deal_del()
+        if not df_del.empty:
+            d2 = DealLine(df_del)
+            deal_df3 = d2.deal_del()
+        else:
+            deal_df3 = None
 
         res = pd.concat([deal_df1, deal_df2, deal_df3], ignore_index=True)
         res[only_df1_column] = 'del_col'
@@ -140,20 +144,17 @@ class DealExcelDiff(DealLine):
         pd.set_option('display.max_rows', None)
         # 设置value的显示长度为100，默认为50
         pd.set_option('display.width', None)
-        print('=' * 100)
+        # print('=' * 100)
         print(res)
         res.to_excel(self.file_write, sheet_name='diff', index=False)
 
 
 if __name__ == '__main__':
-    file1 = "D:/工作/room cube/新版room cube/Room Cube优先级较高的字段V1.2.xlsx"
-    file2 = "D:/工作/room cube/新版room cube/Room Cube优先级较高的字段V1.3.xlsx"
-    file_write = "D:/work2/test_diff.xlsx"
-    primary_key = '需求字段'
-    df1 = pd.read_excel(file1).fillna('001')
-    df2 = pd.read_excel(file2).fillna('001')
+    f_1 = "D:/工作/RoomCube/新版room cube/Room Cube优先级较高的字段V1.3.xlsx"
+    f_2 = "D:/工作/RoomCube/新版room cube/Room Cube优先级较高的字段V1.4.xlsx"
+    fw = "D:/work2/test_diff.xlsx"
+    pr_key = '需求字段'
 
-    a = DealExcelDiff(primary_key, file1, file2, file_write)
-    print(a.primary_key)
+    a = DealExcelDiff(pr_key, f_1, f_2, fw)
 
-    a.deal_same(df1,df2)
+    a.deal_result()
