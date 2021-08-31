@@ -1,5 +1,5 @@
 def intToRoman(num: int) -> str:
-    '''
+    """
     罗马数字包含以下七种字符： I， V， X， L，C，D 和 M。
 
     字符          数值
@@ -21,16 +21,17 @@ def intToRoman(num: int) -> str:
     C 可以放在 D (500) 和 M (1000) 的左边，来表示 400 和 900。
     给定一个整数，将其转为罗马数字。输入确保在 1 到 3999 的范围内。
 
-    '''
+    """
     hashmap = {1000: 'M', 900: 'CM', 500: 'D', 400: 'CD', 100: 'C', 90: 'XC', 50: 'L', 40: 'XL', 10: 'X', 9: 'IX',
                5: 'V', 4: 'IV', 1: 'I'}
     res = ''
     for key in hashmap:
-        if num >= key :
+        if num >= key:
             count = num // key  # 比如输入4000，count 为 4
             res += hashmap[key] * count
             num %= key
-    print(res)
+    return res
 
 
-intToRoman(2984)
+a = intToRoman(2984)
+print(a)

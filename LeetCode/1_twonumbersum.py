@@ -13,38 +13,40 @@
 nums = [2, 3, 6, 7, 11, 15]
 target = 9
 
-def numbersum1(nums,target):
-    d={}
 
-    for i,value in enumerate(nums):
-        d[value]=i
-    for j,key in enumerate(nums):
-        k=d.get(target-key)
-        if k is not None and k != j and k > j :
-            print(j,k)
+def numbersum1(nums, target):
+    d = {}
 
-    #print(d.get(7))
+    for i, value in enumerate(nums):
+        d[value] = i
+    for j, key in enumerate(nums):
+        k = d.get(target - key)
+        if k is not None and k != j and k > j:
+            print(j, k)
 
-
-numbersum1(nums,target)
+    # print(d.get(7))
 
 
-def numbersum2(nums,target):
+numbersum1(nums, target)
+
+
+def numbersum2(nums, target):
     for i in range(len(nums)):
-        for j in range(i+1,len(nums)):
+        for j in range(i + 1, len(nums)):
             if nums[i] + nums[j] == target:
-                print(i,j)
-
-numbersum2(nums,target)
+                print(i, j)
 
 
-def numbersum3(nums,target):
+numbersum2(nums, target)
+
+
+def numbersum3(nums, target):
     for i in range(len(nums)):
-        tmp=nums[i+1:]
-        num=target-nums[i]
+        tmp = nums[i + 1:]
+        num = target - nums[i]
         if num in tmp:
             j = nums.index(num)
-            print(i,j)
+            print(i, j)
 
 
-numbersum3(nums,target)
+numbersum3(nums, target)

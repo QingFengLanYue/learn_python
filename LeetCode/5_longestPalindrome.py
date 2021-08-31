@@ -1,4 +1,4 @@
-#给定一个字符串 s，找到 s 中最长的回文子串。你可以假设 s 的最大长度为 1000。
+# 给定一个字符串 s，找到 s 中最长的回文子串。你可以假设 s 的最大长度为 1000。
 
 
 def longestPalindrome(s):
@@ -13,14 +13,13 @@ def longestPalindrome(s):
                 dp[j][j + i] = 1
                 res = j, j + i
     left, right = res
-    print( s[left: right + 1])
+    print(s[left: right + 1])
 
 
-#longestPalindrome("cbababcbbd")
+# longestPalindrome("cbababcbbd")
 
 
-def longestPalindrome2(s) :
-
+def longestPalindrome2(s):
     for i in range(len(s)):
         for l in range(i + 1):
             r = i - l

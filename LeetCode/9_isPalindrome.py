@@ -1,15 +1,17 @@
 def isPalindrome(x: int) -> bool:
-    result = 'True'
+    result = True
     if x >= 0:
-        x=str(x)
-        l=len(x)
-        for i in range(int(l/2)):
-            if x[i] != x[l-1-i] :
-                result='False'
+        x = str(x)
+        m = len(x)
+        for i in range(m // 2):
+            if x[i] != x[m - 1 - i]:
+                result = False
                 break
-        print(result)
-    else :
-        print('False')
+        return result
+    else:
+        return False
+
+
 # def isPalindrome(x: int) -> bool:
 #     lst = list(str(x))
 #     L, R = 0, len(lst)-1
@@ -20,5 +22,5 @@ def isPalindrome(x: int) -> bool:
 #         R -= 1
 #     print(True)
 
-isPalindrome(303031)
-
+a = isPalindrome(334334)
+print(a)

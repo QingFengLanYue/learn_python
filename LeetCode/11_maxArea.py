@@ -5,13 +5,15 @@ def maxArea(height: list) -> int:
     使得它们与 x 轴共同构成的容器可以容纳最多的水
 
     '''
-    i,j,m = 0,len(height)-1,0
-    while height[i] < height[j] :
-        m=max(m,height[i]*(j-i))
-        i+=1
+    i, j, m = 0, len(height) - 1, 0
+    while height[i] < height[j]:
+        m = max(m, height[i] * (j - i))
+        i += 1
     else:
         m = max(m, height[j] * (j - i))
-        j-=1
+        j -= 1
     print(m)
-height=[1,8,6,2,5,4,8,3,7]
+
+
+height = [1, 8, 6, 2, 5, 4, 8, 3, 7]
 maxArea(height)
