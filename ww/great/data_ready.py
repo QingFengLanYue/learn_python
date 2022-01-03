@@ -36,7 +36,7 @@ def insert_sql(d):
     for x in d.keys():
         sql = d.get(x)
         sql = f'insert into {x}(' + ','.join(sql) + ') values'
-        values = txt_deal(x + '.txt')
+        values = txt_deal('data/' + x + '.txt')
         sql = sql + values
         insql = insql + sql
         # print(insql)
@@ -76,8 +76,8 @@ def table_list():
 
 
 if __name__ == '__main__':
-    cur.execute("drop table main;")
-    cur.execute("drop table detail")
+    cur.execute("drop table if exists main;")
+    cur.execute("drop table if exists detail")
     create_table()
     column_list = table_list()
     insert_sql(column_list)

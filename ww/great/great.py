@@ -6,6 +6,8 @@ date:2021/12/29
 # coding=utf8
 import re
 import sqlite3
+import uuid
+
 import pandas as pd
 from ww.great import data_ready
 
@@ -16,6 +18,20 @@ column_list = data_ready.table_list()
 
 cur.execute("select * from detail")
 m = cur.fetchmany(3)
+
+
+def uuid_version():
+    uuidOne = uuid.uuid1()
+    uuidOne = re.sub('-', '', str(uuidOne))
+    return uuidOne
+
+
+def uuid_list(num):
+    ul = []
+    for i in range(num):
+        l = uuid_version()
+        ul.append(l)
+    return ul
 
 
 def main_deal(x):
@@ -52,7 +68,7 @@ def great_number(num):
     res['great_number'] = res['id'].str.cat(res['defecttrack_detailid'])
     res['great_number'] = res['great_number'].apply(great_number_concat)
 
-    return res['great_number'], res['s_hotel_code']
+    return res['great_number'], res['s_hotel_code'].fillna('error code 01')
 
 
 def category_read():
@@ -96,10 +112,11 @@ while m:
     m = category_concat(res, category)
     data = pd.concat([data, m], axis=1)
     mastcate = mast_category_read()
-    mcat = mast_category(data,mastcate)
+    mcat = mast_category(data, mastcate)
     data = pd.concat([data, mcat], axis=1)
-
+    data['version'] = uuid_list(data.shape[0])
     print(data)
+    print(data.shape[0])
 
     m = cur.fetchmany(3)
     print("下一批")
