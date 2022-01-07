@@ -4,6 +4,7 @@ project:learn_python
 date:2021/12/29
 """
 # coding=utf8
+import datetime
 import re
 import sqlite3
 import uuid
@@ -53,12 +54,14 @@ def read_property():
     return m
 
 
-def great_number_concat(a):
-    m = '2000000000000'
-    if len(a) < 13:
-        return m[0:13 - len(a)] + a
+def number_concat(a, m):
+    # m = '2000000000000'
+    l = len(m)
+    if len(a) < l:
+
+        return m[0:l - len(a)] + a
     else:
-        return a[0:13]
+        return a[0:l]
 
 
 def great_number(num):
@@ -66,7 +69,7 @@ def great_number(num):
     res = num.merge(hotel, how='left', left_on='chtl_code', right_on='dr3_hotel_code')
     res['id'] = res['id'].fillna('999')
     res['great_number'] = res['id'].str.cat(res['defecttrack_detailid'])
-    res['great_number'] = res['great_number'].apply(great_number_concat)
+    res['great_number'] = res['great_number'].apply(number_concat, args=('2000000000000',))
 
     return res['great_number'], res['s_hotel_code'].fillna('error code 01')
 
@@ -86,6 +89,35 @@ def mast_category_read():
     return m
 
 
+def location_read():
+    property_column = ['id', 'location_id', 'node_type', 'node_code', 'parent_id', 'property_code']
+    m = pd.read_csv('data/localtion.txt', delimiter='!#~', dtype=str, header=None, engine='python')
+    m.columns = property_column
+    return m
+
+
+def code_check(df1, column, st1, column1, column2):
+    if df1[column] == st1:
+        return df1[column1]
+    else:
+        return df1[column2]
+
+
+def localtion_deal(data):
+    l = location_read()
+    data = data[['New location', 'nroom_no', 'property_code']]
+    m = pd.merge(data, l, how='left', left_on=['nroom_no', 'property_code'], right_on=['node_code', 'property_code'])
+    m['no_01'] = m['node_code'].fillna('error code 15')
+
+    m = pd.merge(m, l, how='left', left_on=['New location', 'property_code'],
+                 right_on=['node_code', 'property_code'])
+
+    m['node_code_n'] = m['node_code_y'].fillna('error code 14')
+    m['s_node_code'] = m.apply(code_check, args=('New location', 'Guest room <#>', 'no_01', 'node_code_n'),
+                               axis=1)
+    return m['s_node_code']
+
+
 def category_concat(data, category):
     category = data.merge(category, how='left', left_on=['question', 'sub_que', 'sub_sque'],
                           right_on=['QUESTION', 'SUB_QUE', 'SUB_SQUE'])
@@ -97,6 +129,39 @@ def mast_category(data, category):
                                  right_on=['category_item', 'category_type', 'property_code'])
     master_category['category_code'] = master_category['category_code'].fillna('error code 06')
     return master_category[['category_code', 'category_type', 'category_item']]
+
+
+def read_ad():
+    df = pd.read_csv('data/ad.csv', dtype=str)
+    return df
+
+
+def read_user():
+    df = pd.read_csv('data/user.csv', dtype=str)
+    return df
+
+
+def user_name(n):
+    if n['ad'] == 'both' and n['s_360'] == 'both':
+        return n['s_name']
+    elif n['ad'] == 'both' and n['s_360'] == 'left_only':
+        return 'error code 08'
+    else:
+        return 'error code 09'
+
+
+def report_by_deal(res, col):
+    ad = read_ad()
+    user = read_user()
+    user['s_name'] = user['user_name']
+    res[col] = res[col].fillna('user4.test@sl.net')
+    r1 = pd.merge(res, ad, how='left', left_on=col, right_on='user_name', indicator='ad')
+    r1['user_name'] = r1['user_name'].fillna('error code 09')
+    # print(r1)
+    r2 = pd.merge(r1, user, how='left', on='user_name', indicator='s_360')
+    r2['s_name'] = r2['s_name'].fillna('error code 08')
+    r2['s_name'] = r2.apply(user_name, axis=1)
+    return r2['s_name']
 
 
 while m:
@@ -115,8 +180,23 @@ while m:
     mcat = mast_category(data, mastcate)
     data = pd.concat([data, mcat], axis=1)
     data['version'] = uuid_list(data.shape[0])
+    data['date_feedback_received'] = res['drec_date_detail'].fillna('error code 02')
+    data['narrative'] = res['comment'].fillna('N/A')
+
+    data['report_by'] = report_by_deal(res, 'reported_by')
+    data['report_by_name'] = data['report_by'].fillna('user4 test')
+
+    data['nroom_no'] = res['nroom_no'].apply(number_concat, args=('0000',))
+
+    # pd.set_option('display.height', 1000)
+    # pd.set_option('display.max_rows', 500)
+    # pd.set_option('display.max_columns', 500)
+    # pd.set_option('display.width', 1000)
+
+    data['node_code'] = localtion_deal(data)
+    data['actual_defect_date'] = res['dact_date_detail'].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d '
+                                                                                                       '%H:%M:%S'))
     print(data)
-    print(data.shape[0])
 
     m = cur.fetchmany(3)
     print("下一批")

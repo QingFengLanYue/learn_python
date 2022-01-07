@@ -59,7 +59,7 @@ def create_table():
         t1 = [f'{k} {v}' for k, v in t[['column', 'type']].values.tolist()]
         fields = ',\n'.join(t1)
         s = f"""create table if not exists {i} ({fields});\n"""
-        # print(s)
+
         cur.execute(s)
 
 
