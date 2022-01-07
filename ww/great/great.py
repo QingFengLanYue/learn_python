@@ -96,6 +96,21 @@ def location_read():
     return m
 
 
+def department():
+    property_column = ['id', 'department_code', 'department_name', 'department_level', 'parent_department_code',
+                       'is_deleted', 'create_by', 'create_time', 'update_by', 'update_time']
+    m = pd.read_csv('data/department.txt', delimiter='!#~', dtype=str, header=None, engine='python')
+    m.columns = property_column
+    m = m[m['department_level'] == 2]
+    return m
+
+
+def department_concat(data, department):
+    department = data.merge(department, how='left', left_on='New department responsible',
+                            right_on='department_name')
+    return department['department_code']
+
+
 def code_check(df1, column, st1, column1, column2):
     if df1[column] == st1:
         return df1[column1]
@@ -164,6 +179,16 @@ def report_by_deal(res, col):
     return r2['s_name']
 
 
+def s_status():
+    status = {'N': '0', 'F': '1', 'P': '1'}
+    return status
+
+
+def s_resovled_by():
+    if res['cresolution'] != 'N':
+        return report_by_deal(res, 'reported_by')
+
+
 while m:
     data = pd.DataFrame()
     table_detail = pd.DataFrame(m, columns=column_list.get('detail'))
@@ -194,8 +219,20 @@ while m:
     # pd.set_option('display.width', 1000)
 
     data['node_code'] = localtion_deal(data)
-    data['actual_defect_date'] = res['dact_date_detail'].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d '
-                                                                                                       '%H:%M:%S'))
+    data['actual_defect_date'] = res['dact_date_detail'].apply(
+        lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+    data['status'] = res['cresolution'].map(s_status()).fillna('2')
+    data['meal_period_id'] = None
+    data['resovled_by'] = data.apply(code_check, args=('status', 'N', 'report_by', 'meal_period_id'), axis=1)
+    data['resovled_by_name'] = data.apply(code_check, args=('status', 'N', 'report_by_name', 'meal_period_id'), axis=1)
+    data['service_recovery_provided'] = res['resol_narrative']
+    data['service_recovery_provided'] = data.apply(code_check, args=('status', 'N', 'service_recovery_provided',
+                                                                     'meal_period_id'), axis=1).fillna('N/A')
+    data['compensation_id'] = '0'
+    data['responsible_department_code'] = department_concat(data, department()).fillna('error code 12')
+
+    data[['charge_to_department_code', 'root_cause_id', 'root_cause_detail', 'check_in_order_number']] = None
+
     print(data)
 
     m = cur.fetchmany(3)
