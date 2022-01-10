@@ -8,17 +8,42 @@ import datetime
 import re
 import sqlite3
 import uuid
-
 import pandas as pd
-from ww.great import data_ready
 
 con = sqlite3.connect("test.db")
 cur = con.cursor()
 hh = con.cursor()
-column_list = data_ready.table_list()
 
 cur.execute("select * from detail")
 m = cur.fetchmany(3)
+
+
+class ReadData:
+
+    def __init__(self):
+        pass
+
+    def file_path(self, file):
+        file = 'data/' + file
+        return file
+
+    def read_txt(self, file, sep, columns):
+        file = self.file_path(file)
+        reader = pd.read_csv(file, delimiter=sep, dtype=str, header=None, engine='python')
+        reader.columns = columns
+        return reader
+
+    def read_csv(self):
+        pass
+
+    def read_excel(self):
+        pass
+
+    def read_database(self):
+        pass
+
+
+read_data = ReadData()
 
 
 def uuid_version():
@@ -40,17 +65,14 @@ def main_deal(x):
     x = re.sub(',\)', ')', str(x))
     main_sql = f"select * from main where defecttrack_mainid in {x}"
     hh.execute(main_sql)
-    main = pd.DataFrame(hh.fetchall(), columns=column_list.get('main'))
+    colnames = [desc[0] for desc in hh.description]
+    main = pd.DataFrame(hh.fetchall(), columns=colnames)
     return main
 
 
 def read_property():
-    property_column = ['id', 'dr3_hotel_code', 's_hotel_code']
-    # with open('property.txt', mode="r") as f:
-    #     print(f.readlines())
-    #     # m = pd.DataFrame(f.readlines(),columns=property_column)
-    m = pd.read_csv('data/property.txt', delimiter='!#~', dtype=str, header=None, engine='python')
-    m.columns = property_column
+    columns = ['id', 'dr3_hotel_code', 's_hotel_code']
+    m = read_data.read_txt('property.txt', '!#~', columns)
     return m
 
 
@@ -82,25 +104,24 @@ def category_read():
 
 
 def mast_category_read():
-    property_column = ['id', 'category_code', 'category_type', 'category_item', 'property_code', 'language_code',
-                       'default_department_code', 'is_deleted', 'create_by', 'create_time', 'update_by', 'update_time']
-    m = pd.read_csv('data/master_category.txt', delimiter='!#~', dtype=str, header=None, engine='python')
-    m.columns = property_column
+    columns = ['id', 'category_code', 'category_type', 'category_item', 'property_code', 'language_code',
+               'default_department_code', 'is_deleted', 'create_by', 'create_time', 'update_by', 'update_time']
+    # m = pd.read_csv('data/master_category.txt', delimiter='!#~', dtype=str, header=None, engine='python')
+    # m.columns = property_column
+    m = read_data.read_txt('master_category.txt', '!#~', columns)
     return m
 
 
 def location_read():
-    property_column = ['id', 'location_id', 'node_type', 'node_code', 'parent_id', 'property_code']
-    m = pd.read_csv('data/localtion.txt', delimiter='!#~', dtype=str, header=None, engine='python')
-    m.columns = property_column
+    columns = ['id', 'location_id', 'node_type', 'node_code', 'parent_id', 'property_code']
+    m = read_data.read_txt('localtion.txt', '!#~', columns)
     return m
 
 
 def department():
-    property_column = ['id', 'department_code', 'department_name', 'department_level', 'parent_department_code',
-                       'is_deleted', 'create_by', 'create_time', 'update_by', 'update_time']
-    m = pd.read_csv('data/department.txt', delimiter='!#~', dtype=str, header=None, engine='python')
-    m.columns = property_column
+    columns = ['id', 'department_code', 'department_name', 'department_level', 'parent_department_code',
+               'is_deleted', 'create_by', 'create_time', 'update_by', 'update_time']
+    m = read_data.read_txt('department.txt', '!#~', columns)
     m = m[m['department_level'] == 2]
     return m
 
@@ -156,26 +177,26 @@ def read_user():
     return df
 
 
-def user_name(n):
+def user_name(n, ec1, ec2):
     if n['ad'] == 'both' and n['s_360'] == 'both':
         return n['s_name']
     elif n['ad'] == 'both' and n['s_360'] == 'left_only':
-        return 'error code 08'
+        return ec1
     else:
-        return 'error code 09'
+        return ec2
 
 
-def report_by_deal(res, col):
+def report_by_deal(res, col, ec1, ec2):
     ad = read_ad()
     user = read_user()
     user['s_name'] = user['user_name']
     res[col] = res[col].fillna('user4.test@sl.net')
     r1 = pd.merge(res, ad, how='left', left_on=col, right_on='user_name', indicator='ad')
-    r1['user_name'] = r1['user_name'].fillna('error code 09')
+    r1['user_name'] = r1['user_name'].fillna(ec2)
     # print(r1)
     r2 = pd.merge(r1, user, how='left', on='user_name', indicator='s_360')
-    r2['s_name'] = r2['s_name'].fillna('error code 08')
-    r2['s_name'] = r2.apply(user_name, axis=1)
+    r2['s_name'] = r2['s_name'].fillna(ec1)
+    r2['s_name'] = r2.apply(user_name, args=(ec1, ec2), axis=1)
     return r2['s_name']
 
 
@@ -189,14 +210,45 @@ def s_resovled_by():
         return report_by_deal(res, 'reported_by')
 
 
+def datetime_concat(x, y):
+    x = x.split()[0]
+    z = datetime.datetime.strptime(x + ' ' + y, '%Y-%m-%d %I:%M:%S %p')
+    return z
+
+
+def mast_source_reed():
+    columns = ['id', 'source_code', 'language_code', 'is_deleted', 'create_by', 'create_time', 'update_by',
+               'update_time']
+    m = read_data.read_txt('mast_source.txt', '\|\|', columns)
+    return m
+
+
+def source_read():
+    file = 'data/Souce Mapping.xlsx'
+    h = pd.read_excel(file, sheet_name='Sheet1')
+    h = h.fillna(method='pad')
+    return h
+
+
+def source_id_deal(data):
+    mast_source = mast_source_reed()
+    source = source_read()
+    source_code = data.merge(source, how='left', left_on='csource_detail', right_on='Old Sources Mapped in')
+    source_id = pd.merge(source_code, mast_source, how='left', left_on='New Proposed Sources', right_on='source_code')
+    return source_id['id']
+
+
 while m:
     data = pd.DataFrame()
-    table_detail = pd.DataFrame(m, columns=column_list.get('detail'))
+    columns = [desc[0] for desc in cur.description]
+    table_detail = pd.DataFrame(m, columns=columns)
     mainid = table_detail['defecttrack_mainid']
     main = main_deal(mainid)
     res = pd.merge(table_detail, main, on=['chtl_code', 'defecttrack_mainid'], suffixes=['_detail', '_main'])
     greatno = res[['chtl_code', 'defecttrack_detailid']]
     data['great_number'], data['property_code'] = great_number(greatno)
+    source_id = source_id_deal(res)
+    data = pd.concat([data, source_id], axis=1)
 
     category = category_read()
     m = category_concat(res, category)
@@ -208,7 +260,7 @@ while m:
     data['date_feedback_received'] = res['drec_date_detail'].fillna('error code 02')
     data['narrative'] = res['comment'].fillna('N/A')
 
-    data['report_by'] = report_by_deal(res, 'reported_by')
+    data['report_by'] = report_by_deal(res, 'reported_by', 'error code 08', 'error code 09')
     data['report_by_name'] = data['report_by'].fillna('user4 test')
 
     data['nroom_no'] = res['nroom_no'].apply(number_concat, args=('0000',))
@@ -223,17 +275,39 @@ while m:
         lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
     data['status'] = res['cresolution'].map(s_status()).fillna('2')
     data['meal_period_id'] = None
-    data['resovled_by'] = data.apply(code_check, args=('status', 'N', 'report_by', 'meal_period_id'), axis=1)
+    data['resovled_by'] = data.apply(code_check, args=('status', '0', 'report_by', 'meal_period_id'), axis=1)
     data['resovled_by_name'] = data.apply(code_check, args=('status', 'N', 'report_by_name', 'meal_period_id'), axis=1)
     data['service_recovery_provided'] = res['resol_narrative']
-    data['service_recovery_provided'] = data.apply(code_check, args=('status', 'N', 'service_recovery_provided',
+    data['service_recovery_provided'] = data.apply(code_check, args=('status', '0', 'service_recovery_provided',
                                                                      'meal_period_id'), axis=1).fillna('N/A')
     data['compensation_id'] = '0'
     data['responsible_department_code'] = department_concat(data, department()).fillna('error code 12')
 
     data[['charge_to_department_code', 'root_cause_id', 'root_cause_detail', 'check_in_order_number']] = None
 
-    print(data)
+    data['update_time'] = res.apply(lambda x: datetime_concat(x['cup_date_detail'], x['cup_time_detail']), axis=1)
+    data['resovled_time'] = data.apply(code_check, args=('status', '0', 'meal_period_id', 'update_time'), axis=1)
+    data['closed_time'] = data.apply(code_check, args=('status', '2', 'update_time', 'meal_period_id'), axis=1)
+    data['cup_user'] = res['cup_user_detail']
+    data['closed_by'] = data.apply(code_check, args=('status', '2', 'cup_user', 'meal_period_id'), axis=1)
+    data[['is_deleted', 'great_source']] = 0, 2
+    data['create_by'] = report_by_deal(res, 'ccre_user', 'error code 10', 'error code 11')
+    data['create_time'] = res.apply(lambda x: datetime_concat(x['ccre_date'], x['ccre_time']), axis=1)
+    data['defecttrack_mainid'] = res['defecttrack_mainid']
+    data['defecttrack_detailid'] = res['defecttrack_detailid']
+    data['cgcno'] = res['cgcno']
+    data['cgst_fname'] = res['cgst_fname']
+    data['cgst_lname'] = res['cgst_lname']
+    data['cemail'] = res['cemail']
+    data['camcmemberno'] = res['camcmemberno']
+    data['resol_narrative'] = res['resol_narrative']
+    data['ccre_date'] = res['ccre_date']
+
+    # data.query('property_code != "error code 01" &  date_feedback_received != "error '
+    #            'code 02" & actual_defect_date != "error code 03" & category_code != "error code 05" & category_code '
+    #            '!= "error code 06" & responsible_department_code != "error code 12"')
+
+    print('values' + str(tuple(data)) + ';')
 
     m = cur.fetchmany(3)
     print("下一批")
