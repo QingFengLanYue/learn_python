@@ -19,31 +19,40 @@ m = cur.fetchmany(3)
 
 
 class ReadData:
+    def __init__(self, file_name, **kwargs):
+        self.file_name = 'data/' + file_name
+        self.sep = kwargs.get('sep', False)
+        self.columns = kwargs.get('columns', False)
 
-    def __init__(self):
-        pass
-
-    def file_path(self, file):
-        file = 'data/' + file
-        return file
-
-    def read_txt(self, file, sep, columns):
-        file = self.file_path(file)
-        reader = pd.read_csv(file, delimiter=sep, dtype=str, header=None, engine='python')
-        reader.columns = columns
+    def read_txt(self):
+        reader = pd.read_csv(self.file_name, sep=self.sep, dtype=str, header=None, engine='python')
+        reader.columns = self.columns
         return reader
 
     def read_csv(self):
-        pass
+        reader = pd.read_csv(self.file_name, dtype=str)
+        return reader
 
     def read_excel(self):
-        pass
+        reader = pd.read_excel(self.file_name, sheet_name='Sheet1')
+        reader = reader.fillna(method='pad')
+        return reader
 
     def read_database(self):
         pass
 
+    def read_check(self):
+        if self.file_name.endswith('.txt'):
+            return self.read_txt()
+        elif self.file_name.endswith('.csv'):
+            return self.read_csv()
+        elif self.file_name.endswith('.xlsx'):
+            return self.read_excel()
 
-read_data = ReadData()
+
+def file_deal(file_name, sep=None, columns=None):
+    read = ReadData(file_name, sep=sep, columns=columns)
+    return read.read_check()
 
 
 def uuid_version():
@@ -72,7 +81,7 @@ def main_deal(x):
 
 def read_property():
     columns = ['id', 'dr3_hotel_code', 's_hotel_code']
-    m = read_data.read_txt('property.txt', '!#~', columns)
+    m = file_deal('property.txt', '!#~', columns)
     return m
 
 
@@ -96,11 +105,10 @@ def great_number(num):
     return res['great_number'], res['s_hotel_code'].fillna('error code 01')
 
 
-def category_read():
-    file = 'data/Category Mapping.xlsx'
-    h = pd.read_excel(file, sheet_name='Sheet1')
-    h = h.fillna(method='pad')
-    return h
+# def category_read():
+#     file = 'Category Mapping.xlsx'
+#     h = file_deal('Category Mapping.xlsx')
+#     return h
 
 
 def mast_category_read():
@@ -108,20 +116,20 @@ def mast_category_read():
                'default_department_code', 'is_deleted', 'create_by', 'create_time', 'update_by', 'update_time']
     # m = pd.read_csv('data/master_category.txt', delimiter='!#~', dtype=str, header=None, engine='python')
     # m.columns = property_column
-    m = read_data.read_txt('master_category.txt', '!#~', columns)
+    m = file_deal('master_category.txt', '!#~', columns)
     return m
 
 
 def location_read():
     columns = ['id', 'location_id', 'node_type', 'node_code', 'parent_id', 'property_code']
-    m = read_data.read_txt('localtion.txt', '!#~', columns)
+    m = file_deal('localtion.txt', '!#~', columns)
     return m
 
 
 def department():
     columns = ['id', 'department_code', 'department_name', 'department_level', 'parent_department_code',
                'is_deleted', 'create_by', 'create_time', 'update_by', 'update_time']
-    m = read_data.read_txt('department.txt', '!#~', columns)
+    m = file_deal('department.txt', '!#~', columns)
     m = m[m['department_level'] == 2]
     return m
 
@@ -167,14 +175,14 @@ def mast_category(data, category):
     return master_category[['category_code', 'category_type', 'category_item']]
 
 
-def read_ad():
-    df = pd.read_csv('data/ad.csv', dtype=str)
-    return df
+# def read_ad():
+#     df = file_deal('ad.csv')
+#     return df
 
-
-def read_user():
-    df = pd.read_csv('data/user.csv', dtype=str)
-    return df
+#
+# def read_user():
+#     df = file_deal('user.csv')
+#     return df
 
 
 def user_name(n, ec1, ec2):
@@ -187,8 +195,8 @@ def user_name(n, ec1, ec2):
 
 
 def report_by_deal(res, col, ec1, ec2):
-    ad = read_ad()
-    user = read_user()
+    ad = file_deal('ad.csv')
+    user = file_deal('user.csv')
     user['s_name'] = user['user_name']
     res[col] = res[col].fillna('user4.test@sl.net')
     r1 = pd.merge(res, ad, how='left', left_on=col, right_on='user_name', indicator='ad')
@@ -219,20 +227,19 @@ def datetime_concat(x, y):
 def mast_source_reed():
     columns = ['id', 'source_code', 'language_code', 'is_deleted', 'create_by', 'create_time', 'update_by',
                'update_time']
-    m = read_data.read_txt('mast_source.txt', '\|\|', columns)
+    m = file_deal('mast_source.txt', '\|\|', columns)
     return m
 
 
-def source_read():
-    file = 'data/Souce Mapping.xlsx'
-    h = pd.read_excel(file, sheet_name='Sheet1')
-    h = h.fillna(method='pad')
-    return h
+# def source_read():
+#     file = 'Souce Mapping.xlsx'
+#     h = file_deal('Souce Mapping.xlsx')
+#     return h
 
 
 def source_id_deal(data):
     mast_source = mast_source_reed()
-    source = source_read()
+    source = file_deal('Souce Mapping.xlsx')
     source_code = data.merge(source, how='left', left_on='csource_detail', right_on='Old Sources Mapped in')
     source_id = pd.merge(source_code, mast_source, how='left', left_on='New Proposed Sources', right_on='source_code')
     return source_id['id']
@@ -250,7 +257,7 @@ while m:
     source_id = source_id_deal(res)
     data = pd.concat([data, source_id], axis=1)
 
-    category = category_read()
+    category = file_deal('Category Mapping.xlsx')
     m = category_concat(res, category)
     data = pd.concat([data, m], axis=1)
     mastcate = mast_category_read()
@@ -307,7 +314,7 @@ while m:
     #            'code 02" & actual_defect_date != "error code 03" & category_code != "error code 05" & category_code '
     #            '!= "error code 06" & responsible_department_code != "error code 12"')
 
-    print('values' + str(tuple(data)) + ';')
+    print('values' + str(data)+ ';')
 
     m = cur.fetchmany(3)
     print("下一批")
