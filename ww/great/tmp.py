@@ -4,8 +4,8 @@ import pandas as pd
 class ReadData:
     def __init__(self, file_name, **kwargs):
         self.file_name = 'data/' + file_name
-        self.sep = kwargs.get('sep', False)
-        self.columns = kwargs.get('columns', False)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def read_txt(self):
         print(self.file_name, self.sep, self.columns)
@@ -42,5 +42,8 @@ def file_deal(file_name, sep=None, columns=None):
     return read.read_check()
 
 
+columns = ['id', 'location_id', 'node_type', 'node_code', 'parent_id', 'property_code']
+
 x = file_deal('localtion.txt', sep='!#~', columns=columns)
 print(x)
+
