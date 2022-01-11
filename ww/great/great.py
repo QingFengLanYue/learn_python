@@ -96,8 +96,9 @@ def great_number(num):
     res['id'] = res['id'].fillna('999')
     res['great_number'] = res['id'].str.cat(res['defecttrack_detailid'])
     res['great_number'] = res['great_number'].apply(number_concat, args=('2000000000000',))
+    res['s_hotel_code'].fillna('error code 01')
 
-    return res['great_number'],res['s_hotel_code'].fillna('error code 01')
+    return res['great_number'], res['s_hotel_code']
 
 
 # def category_read():
@@ -132,7 +133,7 @@ def department():
 def department_concat(data, department):
     department = data.merge(department, how='left', left_on='New department responsible',
                             right_on='department_name')
-    return department['department_code']
+    return department['department_code'].fillna('error code 12')
 
 
 def code_check(df1, column, st1, column1, column2):
@@ -285,7 +286,7 @@ def data_deal(m):
     data['service_recovery_provided'] = data.apply(code_check, args=('status', '0', 'service_recovery_provided',
                                                                      'meal_period_id'), axis=1).fillna('N/A')
     data['compensation_id'] = 0
-    data['responsible_department_code'] = department_concat(data, department()).fillna('error code 12')
+    data['responsible_department_code'] = department_concat(data, department())
 
     data[['charge_to_department_code', 'root_cause_id', 'root_cause_detail', 'check_in_order_number',
           'compensation_amount', 'compensation_currency_code', 'compensation_dollar_amount',
