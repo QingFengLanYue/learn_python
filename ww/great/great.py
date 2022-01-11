@@ -8,6 +8,8 @@ import datetime
 import re
 import sqlite3
 import uuid
+
+import numpy as np
 import pandas as pd
 
 
@@ -66,9 +68,9 @@ def main_deal(x):
     x = tuple(x)
     x = re.sub(',\)', ')', str(x))
     main_sql = f"select * from main where defecttrack_mainid in {x}"
-    hh.execute(main_sql)
-    colnames = [desc[0] for desc in hh.description]
-    main = pd.DataFrame(hh.fetchall(), columns=colnames)
+    cur1.execute(main_sql)
+    colnames = [desc[0] for desc in cur1.description]
+    main = pd.DataFrame(cur1.fetchall(), columns=colnames)
     return main
 
 
@@ -152,7 +154,8 @@ def localtion_deal(data):
     m['node_code_n'] = m['node_code_y'].fillna('error code 14')
     m['s_node_code'] = m.apply(code_check, args=('New location', 'Guest room <#>', 'no_01', 'node_code_n'),
                                axis=1)
-    return m['s_node_code']
+    n = pd.merge(m, l, how='left', left_on='parent_id_y', right_on='location_id', suffixes=['_code', '_type'])
+    return n[['s_node_code', 'node_code']]
 
 
 def category_concat(data, category):
@@ -206,15 +209,15 @@ def s_status():
     return status
 
 
-def s_resovled_by():
-    if res['cresolution'] != 'N':
-        return report_by_deal(res, 'reported_by')
+# def s_resovled_by():
+#     if res['cresolution'] != 'N':
+#         return report_by_deal(res, 'reported_by')
 
 
-def datetime_concat(x, y):
-    x = x.split()[0]
-    z = datetime.datetime.strptime(x + ' ' + y, '%Y-%m-%d %I:%M:%S %p')
-    return z
+def datetime_concat(date, time):
+    date = date.split()[0]
+    date_time = datetime.datetime.strptime(date + ' ' + time, '%Y-%m-%d %I:%M:%S %p')
+    return str(date_time)
 
 
 def mast_source_reed():
@@ -238,85 +241,159 @@ def source_id_deal(data):
     return source_id['id']
 
 
+def data_deal(m):
+    data = pd.DataFrame()
+    columns = [desc[0] for desc in cur.description]
+    table_detail = pd.DataFrame(m, columns=columns)
+    mainid = table_detail['defecttrack_mainid']
+    main = main_deal(mainid)
+    res = pd.merge(table_detail, main, on=['chtl_code', 'defecttrack_mainid'], suffixes=['_detail', '_main'])
+    greatno = res[['chtl_code', 'defecttrack_detailid']]
+    data['great_number'], data['property_code'] = great_number(greatno)
+    data['source_id'] = source_id_deal(res)
+    # data = pd.concat([data, source_id], axis=1)
+
+    category = file_deal('Category Mapping.xlsx')
+    m = category_concat(res, category)
+    data = pd.concat([data, m], axis=1)
+    mastcate = mast_category_read()
+    mcat = mast_category(data, mastcate)
+    data = pd.concat([data, mcat], axis=1)
+    data['version'] = uuid_list(data.shape[0])
+    data['date_feedback_received'] = res['drec_date_detail'].fillna('error code 02')
+    data['narrative'] = res['comment'].fillna('N/A')
+
+    data['report_by'] = report_by_deal(res, 'reported_by', 'error code 08', 'error code 09')
+    data['report_by_name'] = data['report_by'].fillna('user4 test')
+
+    data['nroom_no'] = res['nroom_no'].apply(number_concat, args=('0000',))
+
+    # pd.set_option('display.height', 1000)
+    # pd.set_option('display.max_rows', 500)
+    # pd.set_option('display.max_columns', 500)
+    # pd.set_option('display.width', 1000)
+
+    data[['location', 'location_type']] = localtion_deal(data)
+    data['actual_defect_date'] = res['dact_date_detail'].apply(
+        lambda x: str(datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S')))
+    data['status'] = res['cresolution'].map(s_status()).fillna('2')
+    data['meal_period_id'] = None
+    data['resovled_by'] = data.apply(code_check, args=('status', '0', 'report_by', 'meal_period_id'), axis=1)
+    data['resovled_by_name'] = data.apply(code_check, args=('status', 'N', 'report_by_name', 'meal_period_id'),
+                                          axis=1)
+    data['service_recovery_provided'] = res['resol_narrative']
+    data['service_recovery_provided'] = data.apply(code_check, args=('status', '0', 'service_recovery_provided',
+                                                                     'meal_period_id'), axis=1).fillna('N/A')
+    data['compensation_id'] = 0
+    data['responsible_department_code'] = department_concat(data, department()).fillna('error code 12')
+
+    data[['charge_to_department_code', 'root_cause_id', 'root_cause_detail', 'check_in_order_number',
+          'compensation_amount', 'compensation_currency_code', 'compensation_dollar_amount',
+          'local_compensation_currency_code', 'compensation_local_amount', 'closed_by_name']] = None
+
+    data['update_time'] = res.apply(lambda x: datetime_concat(x['cup_date_detail'], x['cup_time_detail']), axis=1)
+    data['resovled_time'] = data.apply(code_check, args=('status', '0', 'meal_period_id', 'update_time'), axis=1)
+    data['closed_time'] = data.apply(code_check, args=('status', '2', 'update_time', 'meal_period_id'), axis=1)
+    data['cup_user'] = res['cup_user_detail']
+    data['closed_by'] = data.apply(code_check, args=('status', '2', 'cup_user', 'meal_period_id'), axis=1)
+    data[['is_deleted', 'great_source']] = 0, 2
+    data['create_by'] = report_by_deal(res, 'ccre_user', 'error code 10', 'error code 11')
+    data['create_time'] = res.apply(lambda x: datetime_concat(x['ccre_date'], x['ccre_time']), axis=1)
+    data['update_by'] = res['cup_user_detail']
+    data['defecttrack_mainid'] = res['defecttrack_mainid']
+    data['defecttrack_detailid'] = res['defecttrack_detailid']
+    data['cgcno'] = res['cgcno']
+    data['cgst_fname'] = res['cgst_fname']
+    data['cgst_lname'] = res['cgst_lname']
+    data['cemail'] = res['cemail']
+    data['camcmemberno'] = res['camcmemberno']
+    data['resol_narrative'] = res['resol_narrative']
+    data['ccre_date'] = res['ccre_date']
+
+    return data
+
+
+def insert_sql(data):
+    columns = ['great_number',
+               'property_code',
+               'source_id',
+               'date_feedback_received',
+               'narrative',
+               'report_by',
+               'report_by_name',
+               'location',
+               'location_type',
+               'actual_defect_date',
+               'category_code',
+               'category_type',
+               'category_item',
+               'meal_period_id',
+               'status',
+               'resovled_by',
+               'resovled_by_name',
+               'service_recovery_provided',
+               'compensation_id',
+               'compensation_amount',
+               'compensation_currency_code',
+               'compensation_dollar_amount',
+               'local_compensation_currency_code',
+               'compensation_local_amount',
+               'responsible_department_code',
+               'root_cause_id',
+               'root_cause_detail',
+               'check_in_order_number',
+               'resovled_time',
+               'closed_time',
+               'closed_by',
+               'closed_by_name',
+               'version',
+               'is_deleted',
+               'great_source',
+               'create_by',
+               'create_time',
+               'update_by',
+               'update_time',
+               'charge_to_department_code']
+
+    # data.query('property_code != "error code 01" &  date_feedback_received != "error ' 'code 02" &
+    # actual_defect_date != "error code 03" & category_code != "error code 05" & category_code ' '!= "error code
+    # 06" & responsible_department_code != "error code 12"')
+    data_res = data[columns].copy()
+
+    data_res['meal_period_id'] = 'null'
+    data_res['compensation_amount'] = 'null'
+    data_res['compensation_dollar_amount'] = 'null'
+    data_res['compensation_local_amount'] = 'null'
+    data_res['root_cause_id'] = 'null'
+    data_res.replace(np.nan, '', inplace=True)
+    data_list = (data_res.values.tolist())
+
+    columns_str = ','.join(columns)
+    sql = f'''insert into great({columns_str}) values '''
+    for values in data_list:
+        values = str(tuple(values))
+        values = re.sub('\'null\'', 'null', values)
+        values = re.sub('error code ', 'error_', values)
+        sql = sql + values + ','
+    sql = re.sub(',$', ';', sql)
+    print(sql)
+
+
 if __name__ == '__main__':
+
+    batch = 1
+    parallel_number = 4
     con = sqlite3.connect("test.db")
     cur = con.cursor()
-    hh = con.cursor()
+    cur1 = con.cursor()
 
-    cur.execute("select * from detail")
-    m = cur.fetchmany(3)
+    detail_sql = "select * from detail"
+    cur.execute(detail_sql)
+    m = cur.fetchmany(parallel_number)
 
     while m:
-        data = pd.DataFrame()
-        columns = [desc[0] for desc in cur.description]
-        table_detail = pd.DataFrame(m, columns=columns)
-        mainid = table_detail['defecttrack_mainid']
-        main = main_deal(mainid)
-        res = pd.merge(table_detail, main, on=['chtl_code', 'defecttrack_mainid'], suffixes=['_detail', '_main'])
-        greatno = res[['chtl_code', 'defecttrack_detailid']]
-        data['great_number'], data['property_code'] = great_number(greatno)
-        source_id = source_id_deal(res)
-        data = pd.concat([data, source_id], axis=1)
-
-        category = file_deal('Category Mapping.xlsx')
-        m = category_concat(res, category)
-        data = pd.concat([data, m], axis=1)
-        mastcate = mast_category_read()
-        mcat = mast_category(data, mastcate)
-        data = pd.concat([data, mcat], axis=1)
-        data['version'] = uuid_list(data.shape[0])
-        data['date_feedback_received'] = res['drec_date_detail'].fillna('error code 02')
-        data['narrative'] = res['comment'].fillna('N/A')
-
-        data['report_by'] = report_by_deal(res, 'reported_by', 'error code 08', 'error code 09')
-        data['report_by_name'] = data['report_by'].fillna('user4 test')
-
-        data['nroom_no'] = res['nroom_no'].apply(number_concat, args=('0000',))
-
-        # pd.set_option('display.height', 1000)
-        # pd.set_option('display.max_rows', 500)
-        # pd.set_option('display.max_columns', 500)
-        # pd.set_option('display.width', 1000)
-
-        data['node_code'] = localtion_deal(data)
-        data['actual_defect_date'] = res['dact_date_detail'].apply(
-            lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
-        data['status'] = res['cresolution'].map(s_status()).fillna('2')
-        data['meal_period_id'] = None
-        data['resovled_by'] = data.apply(code_check, args=('status', '0', 'report_by', 'meal_period_id'), axis=1)
-        data['resovled_by_name'] = data.apply(code_check, args=('status', 'N', 'report_by_name', 'meal_period_id'),
-                                              axis=1)
-        data['service_recovery_provided'] = res['resol_narrative']
-        data['service_recovery_provided'] = data.apply(code_check, args=('status', '0', 'service_recovery_provided',
-                                                                         'meal_period_id'), axis=1).fillna('N/A')
-        data['compensation_id'] = '0'
-        data['responsible_department_code'] = department_concat(data, department()).fillna('error code 12')
-
-        data[['charge_to_department_code', 'root_cause_id', 'root_cause_detail', 'check_in_order_number']] = None
-
-        data['update_time'] = res.apply(lambda x: datetime_concat(x['cup_date_detail'], x['cup_time_detail']), axis=1)
-        data['resovled_time'] = data.apply(code_check, args=('status', '0', 'meal_period_id', 'update_time'), axis=1)
-        data['closed_time'] = data.apply(code_check, args=('status', '2', 'update_time', 'meal_period_id'), axis=1)
-        data['cup_user'] = res['cup_user_detail']
-        data['closed_by'] = data.apply(code_check, args=('status', '2', 'cup_user', 'meal_period_id'), axis=1)
-        data[['is_deleted', 'great_source']] = 0, 2
-        data['create_by'] = report_by_deal(res, 'ccre_user', 'error code 10', 'error code 11')
-        data['create_time'] = res.apply(lambda x: datetime_concat(x['ccre_date'], x['ccre_time']), axis=1)
-        data['defecttrack_mainid'] = res['defecttrack_mainid']
-        data['defecttrack_detailid'] = res['defecttrack_detailid']
-        data['cgcno'] = res['cgcno']
-        data['cgst_fname'] = res['cgst_fname']
-        data['cgst_lname'] = res['cgst_lname']
-        data['cemail'] = res['cemail']
-        data['camcmemberno'] = res['camcmemberno']
-        data['resol_narrative'] = res['resol_narrative']
-        data['ccre_date'] = res['ccre_date']
-
-        # data.query('property_code != "error code 01" &  date_feedback_received != "error '
-        #            'code 02" & actual_defect_date != "error code 03" & category_code != "error code 05" & category_code '
-        #            '!= "error code 06" & responsible_department_code != "error code 12"')
-
-        print('values' + str(data) + ';')
-
-        m = cur.fetchmany(3)
-        print("下一批")
+        print(f'进行第{batch}批次处理...')
+        data = data_deal(m)
+        insert_sql(data)
+        m = cur.fetchmany(parallel_number)
+        batch += 1
