@@ -97,7 +97,7 @@ def great_number(num):
     res['great_number'] = res['id'].str.cat(res['defecttrack_detailid'])
     res['great_number'] = res['great_number'].apply(number_concat, args=('2000000000000',))
 
-    return res['great_number'], res['s_hotel_code'].fillna('error code 01')
+    return res['great_number'],res['s_hotel_code'].fillna('error code 01')
 
 
 # def category_read():
