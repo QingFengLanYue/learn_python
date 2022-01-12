@@ -1,0 +1,10 @@
+1!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~ALL-PROPERTY!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
+2!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~SLZO!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
+3!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~SLH!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
+4!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~PROPERTYTEST!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
+5!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~TESTWYP!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
+6!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~WYPTEST!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
+7!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~TEST!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
+8!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~DIFF!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
+9!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~SLSL!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
+10!#~100001!#~Service!#~Arrival - not greeted  / escorted!#~W!#~EN!#~!#~0!#~!#~2021-12-20 14:50:19!#~!#~2021-12-20 14:50:19
