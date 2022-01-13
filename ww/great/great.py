@@ -16,8 +16,8 @@ import pandas as pd
 class ReadData:
     def __init__(self, file_name, **kwargs):
         self.file_name = 'data/' + file_name
-        self.sep = kwargs.get('sep', False)
-        self.columns = kwargs.get('columns', False)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def read_txt(self):
         reader = pd.read_csv(self.file_name, sep=self.sep, dtype=str, header=None, engine='python')
