@@ -1,34 +1,49 @@
 import pandas as pd
-file = 'data/Category Mapping.xlsx'
-h = pd.read_excel(file,sheet_name='Sheet1')
-h = h.fillna(method='pad')
-print(h)
 
 
+class ReadData:
+    def __init__(self, file_name, **kwargs):
+        self.file_name = 'data/' + file_name
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
-def parse_header(df, skiprows, nrows):
-    # 提取表头df，其中skiprows表示表格前的空行，nrows表示表头的行数，重新建立index
-    head_df = df.loc[skiprows: skiprows+nrows-1]
-    head_df = head_df.reset_index(drop=True)
-    # 处理合并单元格，填充NaN
-    head_df = head_df.fillna(method='ffill', axis=0)
-    head_df = head_df.fillna(method='ffill', axis=1)
-    # 建立表头
-    head_df.loc[nrows] = ''
-    head_df.loc[nrows] = head_df.apply(process_header, args=(nrows,))
-    df = df.loc[skiprows+nrows:]
-    df = df.reset_index(drop=True)
-    df.columns = list(head_df.loc[nrows])
+    def read_txt(self):
+        print(self.file_name, self.sep, self.columns)
+        reader = pd.read_csv(self.file_name, sep=self.sep, dtype=str, header=None, engine='python')
+        reader.columns = self.columns
+        return reader
 
-    return df
+    def read_csv(self):
+        reader = pd.read_csv(self.file_name, dtype=str)
+        return reader
 
-def process_header(x, index_range):
-    header = x.loc[0]
-    for i in range(index_range-1):
-        if x.loc[i] != x.loc[i+1]:
-            header = header + '_' + x.loc[i+1]
-    return header
+    def read_excel(self):
+        reader = pd.read_excel(self.file_name, sheet_name='Sheet1')
+        reader = reader.fillna(method='pad')
+        return reader
+
+    def read_database(self):
+        pass
+
+    def read_check(self):
+        if self.file_name.endswith('.txt'):
+            print('解析 txt')
+            return self.read_txt()
+        elif self.file_name.endswith('.csv'):
+            print('解析 csv')
+            return self.read_csv()
+        elif self.file_name.endswith('.excel'):
+            print('解析 excel')
+            return self.read_excel()
 
 
-h=parse_header(h,1,0)
-print(h)
+def file_deal(file_name, sep=None, columns=None):
+    read = ReadData(file_name, sep=sep, columns=columns)
+    return read.read_check()
+
+
+columns = ['id', 'location_id', 'node_type', 'node_code', 'parent_id', 'property_code']
+
+x = file_deal('localtion.txt', sep='!#~', columns=columns)
+print(x)
+
