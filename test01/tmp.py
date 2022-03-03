@@ -91,7 +91,7 @@ class l:
         #key, res = jiami(passwd)
         # key='edrcq'
         # res='lhcnbsz'
-        conn, cur = l.con_my(self)
+        conn, cur = l.con_my()
         cur.execute(sql)
         cur.execute('COMMIT;')
         cur.close()
