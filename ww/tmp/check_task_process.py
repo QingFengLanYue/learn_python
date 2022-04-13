@@ -69,7 +69,6 @@ Dear All,
 
 <pre>
 Thank you and best regards
-TDC DataCenter Team.
 </pre>
 </body>
 </html>
