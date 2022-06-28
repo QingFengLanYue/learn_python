@@ -37,7 +37,7 @@ def all_passwd(dictionaries: List[str], maxlen: int):
 zfile = ZipFile(file_name, 'r')  # 很像open
 
 
-
+def extract(zfile: ZipFile, pwd: str) -> bool:
     # zfile: 一个ZipFile类, pwd: 密码
     try:
         zfile.extractall(path='.', pwd=pwd.encode('utf-8'))  # 密码输入错误的时候会报错
