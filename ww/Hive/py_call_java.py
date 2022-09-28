@@ -2,7 +2,7 @@ import jpype
 import os
 
 
-def java_deal(user_name):
+def get_user(user_name):
     """
     基本的开发流程如下：
     ①、使用jpype开启jvm
@@ -22,10 +22,11 @@ def java_deal(user_name):
     jvmPath = jpype.getDefaultJVMPath()
 
     # 开启jvm
-    jpype.startJVM(jvmPath,"-ea", "-Djava.class.path=%s" % ('JpypeDemo.jar'))
+    if not jpype.isJVMStarted():
+        jpype.startJVM(jvmPath, '-ea', '-Djava.class.path=JpypeDemo.jar')
 
     # ②、加载java类（参数是java的长类名）
-    javaClass = jpype.JClass('JpypeDemo')
+    javaClass = jpype.JClass('test.JpypeDemo')
 
     # 实例化java对象
     javaInstance = javaClass()
@@ -41,22 +42,9 @@ def java_deal(user_name):
 
 
 
-def get_user(s):
-    """
-    调用java jar包，对入参进行rsa签名
-    :param sign_raw:待签名字符串
-    :return:signature:签名后的加密字符串
-    """
-    jvmPath = jpype.getDefaultJVMPath()
-    if not jpype.isJVMStarted():
-        jpype.startJVM(jvmPath, '-ea', '-Djava.class.path=JpypeDemo.jar')
-    JDClass = jpype.JClass('JpypeDemo')
-    jd = JDClass()
-    return jd.sayHello(s)
-
 
 if __name__ == '__main__':
-    s='xiaohu'
+    s='xiaohu,asdf'
     h = get_user(s)
     print(h)
     jpype.shutdownJVM()
