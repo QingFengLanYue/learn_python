@@ -26,13 +26,13 @@ def read_file(x):
             if 'zip' in line and 'csv' in line and 'gpg' not in line and '_sales_$YYYY' not in line:
                 csv_file = re.search(r'[a-zA-Z$_{}]*\.csv', line)
                 zip_file = re.search(r'([a-zA-Z$_{}]*)\.zip', line)
-                # print(zip_file.group())
+                zip_file = zip_file[1]
                 st = re.search(r'zip.*', line)
 
                 print(
-                    f'zip这一行替换{st.group()}为 rm -rf {zip_file.group()}.gpg && gpg --recipient tdc2crms  --always-trust --output {zip_file.group()}.gpg --encrypt {csv_file.group()}')
+                    f'zip这一行替换{st.group()}为 rm -rf {zip_file}.csv.gpg && gpg --recipient tdc2crms  --always-trust --output {zip_file}.csv.gpg --encrypt {csv_file.group()}')
                 line = re.sub(r'zip.*',
-                              f'rm -rf {zip_file.group()}.gpg && gpg --recipient tdc2crms  --always-trust --output {zip_file.group()}.gpg --encrypt {csv_file.group()}',
+                              f'rm -rf {zip_file}.csv.gpg && gpg --recipient tdc2crms  --always-trust --output {zip_file}.csv.gpg --encrypt {csv_file.group()}',
                               line)
             elif 'ftp_crms.sh' in line and 'gpg' not in line and '_sales_$YYYY' not in line:
                 zip_file = re.search(r'([a-zA-Z$_{}]*)\.zip', line)
@@ -45,11 +45,11 @@ def read_file(x):
                 zip_file = re.search(r'([a-zA-Z$_{}]*)\.zip', line)
                 m1 = zip_file[0]
                 m2 = zip_file[1]
-                print(f'split 这一行替换{m1} 为 {m2}')
+                print(f'split 这一行替换{m1} 为 {m2}.csv.gpg')
                 line = line.replace(m1, f'{m2}.csv.gpg')
 
             data += line
-        # print(data)
+            # print(data)
     with open(x, 'r+') as f2:
         f2.writelines(data)
 
@@ -71,5 +71,5 @@ def deal_sftp(x):
 
 
 if __name__ == '__main__':
-    path = r'D:\dc-data-etl\etl_task\src\crms\profile\name_address'
+    path = r'D:\dc-data-etl\etl_task\src\crms'
     tra_files(path)
