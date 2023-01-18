@@ -23,7 +23,7 @@ def read_file(x):
     with open(x) as f1:
         lines = f1.readlines()
         for line in lines:
-            if 'zip' in line and 'csv' in line and 'gpg' not in line and '_sales_$YYYY$mm$dd' not in line:
+            if 'zip' in line and 'csv' in line and 'gpg' not in line and '_sales_$YYYY' not in line:
                 csv_file = re.search(r'[a-zA-Z$_{}]*\.csv', line)
                 st = re.search(r'zip.*', line)
 
@@ -32,14 +32,14 @@ def read_file(x):
                 line = re.sub(r'zip.*',
                               f'rm -rf {csv_file.group()}.gpg && gpg --recipient tdc2crms  --always-trust --output {csv_file.group()}.gpg --encrypt {csv_file.group()}',
                               line)
-            elif 'ftp_crms.sh' in line and 'gpg' not in line and '_sales_$YYYY$mm$dd' not in line:
+            elif 'ftp_crms.sh' in line and 'gpg' not in line and '_sales_$YYYY' not in line:
                 zip_file = re.search(r'([a-zA-Z$_{}]*)\.zip', line)
                 m1 = zip_file[0]
                 m2 = zip_file[1]
                 print(f'ftp_crms.sh 这一行替换{m1} 为 {m2}')
                 line = line.replace(m1, f'{m2}.csv.gpg')
 
-            elif 'split' in line and 'gpg' not in line and '_sales_$YYYY$mm$dd' not in line:
+            elif 'split' in line and 'gpg' not in line and '_sales_$YYYY' not in line:
                 zip_file = re.search(r'([a-zA-Z$_{}]*)\.zip', line)
                 m1 = zip_file[0]
                 m2 = zip_file[1]
