@@ -71,5 +71,5 @@ def deal_sftp(x):
 
 
 if __name__ == '__main__':
-    path = r'D:\dc-data-etl\etl_task\src\crms'
+    path = r'C:\IdeaProjects\dc-data-etl\etl_task\src\crms'
     tra_files(path)
